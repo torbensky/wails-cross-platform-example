@@ -17,12 +17,18 @@ jobs:
           - name: "App"
             platform: "linux/amd64"
             os: "ubuntu-latest"
+            goos: "linux"
+            goarch: "amd64"
           - name: "App"
             platform: "windows/amd64"
             os: "windows-latest"
+            goos: "windows"
+            goarch: "amd64"
           - name: "App"
             platform: "darwin/universal"
             os: "macos-latest"
+            goos: "darwin"
+            goarch: "amd64" # Universal build handles ARM64 too
 
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -30,18 +36,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Build wails (Cross-Platform)
-        uses: dAppServer/wails-build-action@v3
-        id: build
+      - name: Install Linux Dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
-          package: false
-          go-version: "1.25"
-
+          go-version: "1.25" # Use a recent, stable Go version
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - name: Build wails App
+        env:
+          GOOS: ${{ matrix.build.goos }}
+          GOARCH: ${{ matrix.build.goarch }}
+        run: |
+          wails build
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.name }}-${{ matrix.build.platform }}
-          path: build/bin/*
+          path: build/bin/* # Artifacts are found here after a wails build
