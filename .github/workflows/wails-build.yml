@@ -40,7 +40,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update
-          sudo apt install -y libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+          sudo apt install -y libgtk-3-dev libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -67,5 +67,5 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.name }}-${{ matrix.build.platform }}
-          path: build/bin/* # Artifacts are found here after a wails build
+          name: ${{ matrix.build.name }}-${{ matrix.build.goos }}-${{ matrix.build.goarch }}
+          path: build/bin/*
